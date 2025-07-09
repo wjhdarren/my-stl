@@ -8,7 +8,6 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
-#include <type_traits>
 
 namespace my {
 
@@ -53,7 +52,7 @@ public:
   // ctor
   constexpr vector() noexcept : m_data{}, m_size{}, m_capacity{} {}
   explicit vector(size_type count) : vector(count, T{}) {}
-  vector(size_type count, const_reference value) {
+  constexpr vector(size_type count, const_reference value) {
     m_data = allocate(count);
     try {
       std::uninitialized_fill_n(begin(), count, value);
@@ -64,8 +63,12 @@ public:
     }
   }
 
-  template <typename InputIt> vector(InputIt first, InputIt last) {
-    size_type count = std::distance(first, last);
+  // template< container-compatible-range<T> R >
+  // constexpr vector( std::from_range_t, R&& rg,
+  //                   const Allocator& alloc = Allocator() );
+
+  constexpr template <typename InputIt> vector(InputIt first, InputIt last) {
+    auto count = static_cast<size_type>(std::distance(first, last));
     m_data = allocate(count);
     auto constructed_end = m_data;
     try {
@@ -104,21 +107,8 @@ public:
   }
 
   // initializer list
-  vector(std::initializer_list<value_type> ilist) {
-    size_type count = ilist.size();
-    m_data = allocate(count);
-    m_size = m_capacity = count;
-    auto constructed_end = m_data;
-    try {
-      constructed_end =
-          std::uninitialized_copy(ilist.begin(), ilist.end(), m_data);
-      m_size = m_capacity = count;
-    } catch (...) {
-      std::destroy(m_data, constructed_end);
-      deallocate(m_data);
-      throw;
-    }
-  }
+  vector(std::initializer_list<value_type> ilist)
+      : vector(ilist.begin(), ilist.end()) {}
 
   // dtor
   ~vector() {
@@ -126,8 +116,8 @@ public:
     deallocate(m_data);
   }
 
-  // copy assignment operator
-  vector &operator=(const vector &other) {
+  // member functions
+  constexpr vector &operator=(const vector &other) {
     if (this != &other) {
       vector temp(other);
       swap(temp);
@@ -135,7 +125,7 @@ public:
     return *this;
   }
 
-  vector &operator=(vector &&other) noexcept {
+  constexpr vector &operator=(vector &&other) noexcept {
     if (this != &other) {
       std::destroy(begin(), end());
       deallocate(m_data);
@@ -155,59 +145,71 @@ public:
   }
 
   // element access
-  reference at(size_type pos) {
+  constexpr reference at(size_type pos) {
     if (pos >= size()) {
       throw std::out_of_range("my::vector::at: index out of range");
     }
     return *(begin() + pos);
   }
-  const_reference at(size_type pos) const {
+  constexpr const_reference at(size_type pos) const {
     if (pos >= size()) {
       throw std::out_of_range("my::vector::at: index out of range");
     }
     return *(begin() + pos);
   }
-  reference operator[](size_type pos) { return *(begin() + pos); }
-  const_reference operator[](size_type pos) const { return *(begin() + pos); }
-  reference front() { return *begin(); }
-  const_reference front() const { return *begin(); }
-  reference back() { return *(end() - 1); }
-  const_reference back() const { return *(end() - 1); }
-  pointer data() { return m_data; }
-  const_pointer data() const { return m_data; }
+  constexpr reference operator[](size_type pos) { return *(begin() + pos); }
+  constexpr const_reference operator[](size_type pos) const {
+    return *(begin() + pos);
+  }
+  constexpr reference front() { return *begin(); }
+  constexpr const_reference front() const { return *begin(); }
+  constexpr reference back() { return *(end() - 1); }
+  constexpr const_reference back() const { return *(end() - 1); }
+  constexpr pointer data() noexcept { return m_data; }
+  constexpr const_pointer data() const noexcept { return m_data; }
 
   // iterators
-  iterator begin() { return m_data; }
+  constexpr iterator begin() noexcept { return m_data; }
 
-  const_iterator begin() const { return m_data; }
+  constexpr const_iterator begin() const noexcept { return m_data; }
 
-  const_iterator cbegin() const noexcept { return m_data; }
+  constexpr const_iterator cbegin() const noexcept { return m_data; }
 
-  iterator end() { return m_data + m_size; }
+  constexpr iterator end() noexcept { return m_data + m_size; }
 
-  const_iterator end() const { return m_data + m_size; }
+  constexpr const_iterator end() const noexcept { return m_data + m_size; }
 
-  const_iterator cend() const noexcept { return m_data + m_size; }
+  constexpr const_iterator cend() const noexcept { return m_data + m_size; }
 
-  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  constexpr reverse_iterator rbegin() noexcept {
+    return reverse_iterator(end());
+  }
 
-  const_reverse_iterator crbegin() const {
+  constexpr const_reverse_iterator rbegin() noexcept {
+    return reverse_iterator(end());
+  }
+  constexpr const_reverse_iterator crbegin() const noexcept {
     return const_reverse_iterator(end());
   }
 
-  reverse_iterator rend() { return reverse_iterator(begin()); }
+  constexpr reverse_iterator rend() noexcept {
+    return reverse_iterator(begin());
+  }
+  constexpr const_reverse_iterator rend() const noexcept {
+    return reverse_iterator(begin());
+  }
 
-  const_reverse_iterator crend() const {
+  constexpr const_reverse_iterator crend() const noexcept {
     return const_reverse_iterator(begin());
   }
 
   // capacity
-  [[nodiscard]] bool empty() const noexcept { return (size() == 0); }
-  [[nodiscard]] size_type size() const noexcept { return m_size; }
-  [[nodiscard]] size_type max_size() const noexcept {
+  [[nodiscard]] constexpr bool empty() const noexcept { return (size() == 0); }
+  [[nodiscard]] constexpr size_type size() const noexcept { return m_size; }
+  [[nodiscard]] constexpr size_type max_size() const noexcept {
     return std::numeric_limits<difference_type>::max();
   }
-  void reserve(size_type new_cap) {
+  constexpr void reserve(size_type new_cap) {
     if (new_cap > max_size())
       throw std::length_error(
           "my::vector::reserve: can't reserve space greater than max_size()!");
@@ -221,9 +223,9 @@ public:
     m_capacity = new_cap;
   }
 
-  [[nodiscard]] size_type capacity() const noexcept { return m_capacity; };
+  [[nodiscard]] constexpr size_type capacity() const noexcept { return m_capacity; };
 
-  void shrink_to_fit() {
+  constexpr void shrink_to_fit() {
     if (capacity() == size())
       return;
 
@@ -249,22 +251,22 @@ public:
   }
 
   // modifiers
-  void clear() {
+  constexpr void clear() noexcept {
     std::destroy(begin(), end());
     m_size = 0;
   }
 
   // insert
-  iterator insert(const_iterator pos, const_reference value) {
+  constexpr iterator insert(const_iterator pos, const_reference value) {
     emplace(pos, value);
   }
 
-  iterator insert(const_iterator pos, T &&value) {
+  constexpr iterator insert(const_iterator pos, T &&value) {
     emplace(pos, std::move(value));
   }
 
-  iterator insert(const_iterator pos, size_type count, const T &value) {
-    assert((pos >= begin()) && (pos <= end()));
+  constexpr iterator insert(const_iterator pos, size_type count, const T &value) {
+    assert((pos >= cbegin()) && (pos <= cend()));
 
     if (count == 0) {
       return begin() + std::distance(cbegin(), pos);
@@ -310,9 +312,9 @@ public:
   }
 
   template <typename InputIt>
-  iterator insert(const_iterator pos, InputIt first, InputIt last) {
+  constexpr iterator insert(const_iterator pos, InputIt first, InputIt last) {
     // ub if either first or last are iterators into *this
-    assert((pos >= begin()) && (pos <= end()));
+    assert((pos >= cbegin()) && (pos <= cend()));
 
     if (first == last) {
       return begin() + std::distance(cbegin(), pos);
@@ -355,14 +357,14 @@ public:
     return begin() + idx;
   }
 
-  iterator insert(const_iterator pos, std::initializer_list<T> ilist) {
+  constexpr iterator insert(const_iterator pos, std::initializer_list<T> ilist) {
     return insert(pos, ilist.begin(), ilist.end());
   }
 
   // emplace
   template <class... Args>
   constexpr iterator emplace(const_iterator pos, Args &&...args) {
-    assert((pos >= begin()) && (pos <= end()));
+    assert((pos >= cbegin()) && (pos <= cend()));
     auto idx = static_cast<size_type>(std::distance(cbegin(), pos));
     if (capacity() == size()) {
       reserve(capacity() == 0
@@ -385,7 +387,7 @@ public:
   // erase
   constexpr iterator erase(const_iterator pos) {
 
-    assert((pos >= begin()) && (pos < end()));
+    assert((pos >= cbegin()) && (pos < cend()));
 
     auto idx = static_cast<size_type>(pos - begin());
 
@@ -399,7 +401,7 @@ public:
 
   constexpr iterator erase(const_iterator first, const_iterator last) {
     assert(first <= last);
-    assert(first >= begin() && last <= end());
+    assert(first >= cbegin() && last <= cend());
 
     if (first == last)
       return begin() + (first - begin());
@@ -416,11 +418,11 @@ public:
     return begin() + idx;
   }
 
-  void push_back(const_reference value) { emplace_back(value); }
+  constexpr void push_back(const_reference value) { emplace_back(value); }
 
-  void push_back(value_type &&value) { emplace_back(std::move(value)); }
+  constexpr void push_back(value_type &&value) { emplace_back(std::move(value)); }
 
-  template <class... Args> reference emplace_back(Args &&...args) {
+  template <class... Args> constexpr reference emplace_back(Args &&...args) {
     if (capacity() >= size() + 1) {
       new (end()) T(std::forward<Args>(args)...);
       ++m_size;
@@ -442,14 +444,14 @@ public:
     }
   }
 
-  void pop_back() {
+  constexpr void pop_back() {
     if (empty())
       return;
-    back().~T();
+    std::destroy_at(end() - 1);
     --m_size;
   }
 
-  void resize(size_type count) {
+  constexpr void resize(size_type count) {
     if (count == size())
       return;
     if (count < size()) {
@@ -461,10 +463,9 @@ public:
     m_size = count;
   }
 
-  void resize(size_type count, const T &value) {
+  constexpr void resize(size_type count, const T &value) {
     if (count == size())
       return;
-
     if (count < size()) {
       std::destroy(begin() + count, end());
     } else {
@@ -474,7 +475,7 @@ public:
     m_size = count;
   }
 
-  void swap(vector &other) noexcept {
+  constexpr void swap(vector &other) noexcept {
     if (this != &other) {
       std::swap(m_data, other.m_data);
       std::swap(m_size, other.m_size);
@@ -492,6 +493,11 @@ template <typename T>
 constexpr auto operator<=>(const vector<T> &lhs, const vector<T> &rhs) {
   return std::lexicographical_compare_three_way(lhs.begin(), lhs.end(),
                                                 rhs.begin(), rhs.end());
+}
+
+template <typename T>
+constexpr bool operator==(const vector<T> &lhs, const vector<T> &rhs) {
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
 } // namespace my
