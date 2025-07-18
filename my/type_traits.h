@@ -1,4 +1,6 @@
 #pragma once
+#include <cstddef>
+using std::size_t;
 
 namespace my {
 
@@ -138,7 +140,19 @@ template <class T> using add_volatile_t = typename add_volatile<T>::type;
 template <class T> using add_cv_t = typename add_cv<T>::type;
 
 // reference modifications
-template <class T> struct remove_reference;
+template <class T> struct remove_reference {
+  using type = T;
+};
+template <class T> struct remove_reference<T &> {
+  using type = T;
+};
+template <class T> struct remove_reference<T &&> {
+  using type = T;
+};
+
+template <class T>
+using remove_reference_t = typename remove_reference<T>::type;
+
 template <class T> struct add_lvalue_reference;
 template <class T> struct add_rvalue_reference;
 
@@ -176,7 +190,16 @@ template <class T> struct type_identity;
 template <class T> struct remove_cvref;
 template <class T> struct decay;
 template <bool, class T = void> struct enable_if;
-template <bool, class T, class F> struct conditional;
+
+template <bool B, class T, class F> struct conditional {
+  using type = T;
+};
+template <class T, class F> struct conditional<false, T, F> {
+  using type = F;
+};
+template <bool B, class T, class F>
+using conditional_t = typename conditional<B, T, F>::type;
+
 template <class... T> struct common_type;
 template <class T, class U, template <class> class TQual,
           template <class> class UQual>

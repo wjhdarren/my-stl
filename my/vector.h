@@ -11,7 +11,7 @@
 
 namespace my {
 
-template <typename T> class vector {
+template <class T> class vector {
 public:
   using value_type = T;
   using size_type = std::size_t;
@@ -67,7 +67,7 @@ public:
   // constexpr vector( std::from_range_t, R&& rg,
   //                   const Allocator& alloc = Allocator() );
 
-  constexpr template <typename InputIt> vector(InputIt first, InputIt last) {
+  template <class InputIt> constexpr vector(InputIt first, InputIt last) {
     auto count = static_cast<size_type>(std::distance(first, last));
     m_data = allocate(count);
     auto constructed_end = m_data;
@@ -185,7 +185,7 @@ public:
     return reverse_iterator(end());
   }
 
-  constexpr const_reverse_iterator rbegin() noexcept {
+  constexpr const_reverse_iterator rbegin() const noexcept {
     return reverse_iterator(end());
   }
   constexpr const_reverse_iterator crbegin() const noexcept {
@@ -223,7 +223,9 @@ public:
     m_capacity = new_cap;
   }
 
-  [[nodiscard]] constexpr size_type capacity() const noexcept { return m_capacity; };
+  [[nodiscard]] constexpr size_type capacity() const noexcept {
+    return m_capacity;
+  };
 
   constexpr void shrink_to_fit() {
     if (capacity() == size())
@@ -265,7 +267,8 @@ public:
     emplace(pos, std::move(value));
   }
 
-  constexpr iterator insert(const_iterator pos, size_type count, const T &value) {
+  constexpr iterator insert(const_iterator pos, size_type count,
+                            const T &value) {
     assert((pos >= cbegin()) && (pos <= cend()));
 
     if (count == 0) {
@@ -311,7 +314,7 @@ public:
     return begin() + idx;
   }
 
-  template <typename InputIt>
+  template <class InputIt>
   constexpr iterator insert(const_iterator pos, InputIt first, InputIt last) {
     // ub if either first or last are iterators into *this
     assert((pos >= cbegin()) && (pos <= cend()));
@@ -357,7 +360,8 @@ public:
     return begin() + idx;
   }
 
-  constexpr iterator insert(const_iterator pos, std::initializer_list<T> ilist) {
+  constexpr iterator insert(const_iterator pos,
+                            std::initializer_list<T> ilist) {
     return insert(pos, ilist.begin(), ilist.end());
   }
 
@@ -420,7 +424,9 @@ public:
 
   constexpr void push_back(const_reference value) { emplace_back(value); }
 
-  constexpr void push_back(value_type &&value) { emplace_back(std::move(value)); }
+  constexpr void push_back(value_type &&value) {
+    emplace_back(std::move(value));
+  }
 
   template <class... Args> constexpr reference emplace_back(Args &&...args) {
     if (capacity() >= size() + 1) {
@@ -489,13 +495,13 @@ public:
 };
 
 // Non-member functions
-template <typename T>
+template <class T>
 constexpr auto operator<=>(const vector<T> &lhs, const vector<T> &rhs) {
   return std::lexicographical_compare_three_way(lhs.begin(), lhs.end(),
                                                 rhs.begin(), rhs.end());
 }
 
-template <typename T>
+template <class T>
 constexpr bool operator==(const vector<T> &lhs, const vector<T> &rhs) {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
