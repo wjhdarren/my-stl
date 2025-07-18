@@ -153,40 +153,10 @@ template <class T> struct remove_reference<T &&> {
 template <class T>
 using remove_reference_t = typename remove_reference<T>::type;
 
-template <class T> struct add_lvalue_reference;
-template <class T> struct add_rvalue_reference;
-
-template <class T>
-using remove_reference_t = typename remove_reference<T>::type;
-template <class T>
-using add_lvalue_reference_t = typename add_lvalue_reference<T>::type;
-template <class T>
-using add_rvalue_reference_t = typename add_rvalue_reference<T>::type;
-
-// sign modifications
-template <class T> struct make_signed;
-template <class T> struct make_unsigned;
-
-template <class T> using make_signed_t = typename make_signed<T>::type;
-template <class T> using make_unsigned_t = typename make_unsigned<T>::type;
-
-// array modifications
-template <class T> struct remove_extent;
-template <class T> struct remove_all_extents;
-
-template <class T> using remove_extent_t = typename remove_extent<T>::type;
-template <class T>
-using remove_all_extents_t = typename remove_all_extents<T>::type;
-
-// pointer modifications
-template <class T> struct remove_pointer;
-template <class T> struct add_pointer;
-
-template <class T> using remove_pointer_t = typename remove_pointer<T>::type;
-template <class T> using add_pointer_t = typename add_pointer<T>::type;
-
 // other transformations
-template <class T> struct type_identity;
+template <class T> struct type_identity {
+  using type = T;
+};
 template <class T> struct remove_cvref;
 template <class T> struct decay;
 template <bool, class T = void> struct enable_if;
@@ -228,6 +198,52 @@ using unwrap_reference_t = typename unwrap_reference<T>::type;
 template <class T>
 using unwrap_ref_decay_t = typename unwrap_ref_decay<T>::type;
 template <class...> using void_t = void;
+
+namespace detail {
+template <class T> auto try_add_lvalue_reference(int) -> my::type_identity<T &>;
+
+template <class T> auto try_add_lvalue_reference(...) -> my::type_identity<T>;
+
+template <class T>
+auto try_add_rvalue_reference(int) -> my::type_identity<T &&>;
+
+template <class T> auto try_add_rvalue_reference(...) -> my::type_identity<T>;
+} // namespace detail
+
+template <class T>
+struct add_lvalue_reference : decltype(detail::try_add_lvalue_reference<T>(0)) {
+};
+template <class T>
+struct add_rvalue_reference : decltype(detail::try_add_rvalue_reference<T>(0)) {
+};
+template <class T>
+using remove_reference_t = typename remove_reference<T>::type;
+template <class T>
+using add_lvalue_reference_t = typename add_lvalue_reference<T>::type;
+template <class T>
+using add_rvalue_reference_t = typename add_rvalue_reference<T>::type;
+
+// sign modifications
+template <class T> struct make_signed;
+template <class T> struct make_unsigned;
+
+template <class T> using make_signed_t = typename make_signed<T>::type;
+template <class T> using make_unsigned_t = typename make_unsigned<T>::type;
+
+// array modifications
+template <class T> struct remove_extent;
+template <class T> struct remove_all_extents;
+
+template <class T> using remove_extent_t = typename remove_extent<T>::type;
+template <class T>
+using remove_all_extents_t = typename remove_all_extents<T>::type;
+
+// pointer modifications
+template <class T> struct remove_pointer;
+template <class T> struct add_pointer;
+
+template <class T> using remove_pointer_t = typename remove_pointer<T>::type;
+template <class T> using add_pointer_t = typename add_pointer<T>::type;
 
 // logical operator traits
 template <class... B> struct conjunction;
