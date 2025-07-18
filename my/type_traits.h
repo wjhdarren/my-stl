@@ -47,10 +47,10 @@ template <class T> struct is_volatile;
 template <class T> struct is_trivial;
 template <class T> struct is_trivially_copyable;
 template <class T> struct is_standard_layout;
-template <class T> struct is_empty;
+template <class T> struct is_empty : bool_constant<__is_empty(T)> {};
 template <class T> struct is_polymorphic;
 template <class T> struct is_abstract;
-template <class T> struct is_final;
+template <class T> struct is_final : bool_constant<__is_final(T)> {};
 template <class T> struct is_aggregate;
 
 template <class T> struct is_signed;
