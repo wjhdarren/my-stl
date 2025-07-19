@@ -1,6 +1,6 @@
 #pragma once
-#include "type_traits.h"
 #include <concepts>
+#include <type_traits>
 #include <utility>
 
 namespace my {
@@ -34,68 +34,74 @@ struct m_one_then_variadic_args_t {
   explicit m_one_then_variadic_args_t() = default;
 };
 
-// EBO-enabled version: inherit from _T1 if it's empty and not final
-template <typename _T1, typename _T2,
-          bool = my::is_empty_v<_T1> && !my::is_final_v<_T1>>
-class m_compressed_pair : private _T1 {
+// EBO-enabled version: inherit from T1 if it's empty and not final
+template <typename T1, typename T2,
+          bool = std::is_empty_v<T1> && !std::is_final_v<T1>>
+class m_compressed_pair : private T1 {
 public:
-  _T2 second;
+  T2 second;
 
   template <typename... Args2>
   constexpr explicit m_compressed_pair(
       m_zero_then_variadic_args_t,
-      Args2 &&...args2) noexcept(std::is_nothrow_default_constructible_v<_T1> &&
-                                 std::is_nothrow_constructible_v<_T2, Args2...>)
-      : _T1(), second(std::forward<Args2>(args2)...) {}
+      Args2 &&...args2) noexcept(std::is_nothrow_default_constructible_v<T1> &&
+                                 std::is_nothrow_constructible_v<T2, Args2...>)
+      : T1(), second(std::forward<Args2>(args2)...) {}
 
   template <typename Arg1, typename... Args2>
   constexpr m_compressed_pair(
       m_one_then_variadic_args_t, Arg1 &&arg1,
-      Args2 &&...args2) noexcept(std::is_nothrow_constructible_v<_T1, Arg1> &&
-                                 std::is_nothrow_constructible_v<_T2, Args2...>)
-      : _T1(std::forward<Arg1>(arg1)), second(std::forward<Args2>(args2)...) {}
+      Args2 &&...args2) noexcept(std::is_nothrow_constructible_v<T1, Arg1> &&
+                                 std::is_nothrow_constructible_v<T2, Args2...>)
+      : T1(std::forward<Arg1>(arg1)), second(std::forward<Args2>(args2)...) {}
 
-  constexpr _T1 &get_first() noexcept { return *this; }
-  constexpr const _T1 &get_first() const noexcept { return *this; }
-  constexpr _T2 &get_second() noexcept { return second; }
-  constexpr const _T2 &get_second() const noexcept { return second; }
+  constexpr T1 &get_first() noexcept { return *this; }
+  constexpr const T1 &get_first() const noexcept { return *this; }
+  constexpr T2 &get_second() noexcept { return second; }
+  constexpr const T2 &get_second() const noexcept { return second; }
 };
 
 // Non-EBO version: store both members directly
-template <typename _T1, typename _T2> class m_compressed_pair<_T1, _T2, false> {
+template <typename T1, typename T2> class m_compressed_pair<T1, T2, false> {
 public:
-  _T1 first;
-  _T2 second;
+  T1 first;
+  T2 second;
 
   template <typename... Args2>
   constexpr explicit m_compressed_pair(
       m_zero_then_variadic_args_t,
-      Args2 &&...args2) noexcept(std::is_nothrow_default_constructible_v<_T1> &&
-                                 std::is_nothrow_constructible_v<_T2, Args2...>)
+      Args2 &&...args2) noexcept(std::is_nothrow_default_constructible_v<T1> &&
+                                 std::is_nothrow_constructible_v<T2, Args2...>)
       : first(), second(std::forward<Args2>(args2)...) {}
 
   template <typename Arg1, typename... Args2>
   constexpr m_compressed_pair(
       m_one_then_variadic_args_t, Arg1 &&arg1,
-      Args2 &&...args2) noexcept(std::is_nothrow_constructible_v<_T1, Arg1> &&
-                                 std::is_nothrow_constructible_v<_T2, Args2...>)
+      Args2 &&...args2) noexcept(std::is_nothrow_constructible_v<T1, Arg1> &&
+                                 std::is_nothrow_constructible_v<T2, Args2...>)
       : first(std::forward<Arg1>(arg1)), second(std::forward<Args2>(args2)...) {
   }
 
-  constexpr _T1 &get_first() noexcept { return first; }
-  constexpr const _T1 &get_first() const noexcept { return first; }
-  constexpr _T2 &get_second() noexcept { return second; }
-  constexpr const _T2 &get_second() const noexcept { return second; }
+  constexpr T1 &get_first() noexcept { return first; }
+  constexpr const T1 &get_first() const noexcept { return first; }
+  constexpr T2 &get_second() noexcept { return second; }
+  constexpr const T2 &get_second() const noexcept { return second; }
 };
 
+// concepts to be used in unique_ptr
 template <typename D>
 concept has_pointer_type = requires { typename D::pointer; };
+
+template <typename D>
+concept unique_ptr_enable_default_t =
+    !std::is_pointer_v<D> && std::is_default_constructible_v<D>;
 
 template <class T, class Deleter = default_delete<T>> class unique_ptr {
 public:
   using pointer =
-      my::conditional_t<has_pointer_type<my::remove_reference_t<Deleter>>,
-                        typename my::remove_reference_t<Deleter>::pointer, T *>;
+      std::conditional_t<has_pointer_type<std::remove_reference_t<Deleter>>,
+                         typename std::remove_reference_t<Deleter>::pointer,
+                         T *>;
   using element_type = T;
   using deleter_type = Deleter;
 
@@ -137,7 +143,7 @@ public:
   }
 
   // pointer operator
-  [[nodiscard]] constexpr typename my::add_lvalue_reference_t<element_type>
+  [[nodiscard]] constexpr typename std::add_lvalue_reference_t<element_type>
   operator*() const noexcept(noexcept(*std::declval<pointer>())) {
     return *m_pair.get_second();
   }
