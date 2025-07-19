@@ -120,9 +120,8 @@ public:
   constexpr pointer release() noexcept {
     return std::exchange(m_pair.get_second(), nullptr);
   }
-  constexpr pointer reset(pointer ptr = nullptr) noexcept {
-    auto old_ptr = std::exchange(m_pair.get_second(), ptr);
-    if (old_ptr) {
+  constexpr void reset(pointer ptr = nullptr) noexcept {
+    if (auto old_ptr = std::exchange(m_pair.get_second(), ptr)) {
       m_pair.get_first()(old_ptr);
     }
   }

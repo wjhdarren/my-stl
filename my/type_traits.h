@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <type_traits>
 using std::size_t;
 
 namespace my {
@@ -22,7 +23,13 @@ template <class T> struct is_null_pointer;
 template <class T> struct is_integral;
 template <class T> struct is_floating_point;
 template <class T> struct is_array;
-template <class T> struct is_pointer;
+
+template <class T> struct is_pointer : false_type {};
+template <class T *> struct is_pointer : true_type {};
+template <class T> struct is_pointer<T *const> : true_type {};
+template <class T> struct is_pointer<T *volatile> : true_type {};
+template <class T> struct is_pointer<T *const volatile> : true_type {};
+
 template <class T> struct is_lvalue_reference;
 template <class T> struct is_rvalue_reference;
 template <class T> struct is_member_object_pointer;
@@ -59,8 +66,16 @@ template <class T> struct is_bounded_array;
 template <class T> struct is_unbounded_array;
 template <class T> struct is_scoped_enum;
 
-template <class T, class... Args> struct is_constructible;
-template <class T> struct is_default_constructible;
+namespace detail {
+template <class T, class... Args>
+concept constructible_from = requires { T(std::declval<Args>()...); } &&
+                             (std::is_object_v<T> || std::is_reference_v<T>);
+} // namespace detail
+template <class T, class... Args>
+struct is_constructible
+    : bool_constant<detail::constructible_from<T, Args...>> {};
+
+template <class T> struct is_default_constructible : is_constructible<T> {};
 template <class T> struct is_copy_constructible;
 template <class T> struct is_move_constructible;
 
@@ -200,21 +215,17 @@ using unwrap_ref_decay_t = typename unwrap_ref_decay<T>::type;
 template <class...> using void_t = void;
 
 namespace detail {
-template <class T> auto try_add_lvalue_reference(int) -> my::type_identity<T &>;
-
-template <class T> auto try_add_lvalue_reference(...) -> my::type_identity<T>;
-
 template <class T>
-auto try_add_rvalue_reference(int) -> my::type_identity<T &&>;
-
-template <class T> auto try_add_rvalue_reference(...) -> my::type_identity<T>;
+concept can_add_lvalue_reference = requires { typename type_identity<T &>; };
+template <class T>
+concept can_add_rvalue_reference = requires { typename type_identity<T &&>; };
 } // namespace detail
 
-template <class T>
-struct add_lvalue_reference : decltype(detail::try_add_lvalue_reference<T>(0)) {
+template <class T> struct add_lvalue_reference {
+  using type = conditional_t<detail::can_add_lvalue_reference<T>, T &, T>;
 };
-template <class T>
-struct add_rvalue_reference : decltype(detail::try_add_rvalue_reference<T>(0)) {
+template <class T> struct add_rvalue_reference {
+  using type = conditional_t<detail::can_add_rvalue_reference<T>, T &&, T>;
 };
 template <class T>
 using remove_reference_t = typename remove_reference<T>::type;
