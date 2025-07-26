@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cassert>
+#include <concepts>
 #include <cstddef>
 #include <initializer_list>
 #include <iostream>
@@ -261,11 +262,11 @@ public:
 
   // insert
   constexpr iterator insert(const_iterator pos, const_reference value) {
-    emplace(pos, value);
+    return emplace(pos, value);
   }
 
   constexpr iterator insert(const_iterator pos, T &&value) {
-    emplace(pos, std::move(value));
+    return emplace(pos, std::move(value));
   }
 
   constexpr iterator insert(const_iterator pos, size_type count,
@@ -296,7 +297,6 @@ public:
       m_data = new_data;
       m_capacity = new_cap;
     } else {
-      auto old_end = end();
       value_type value_copy =
           value; // Fix self-reference: make a copy of value before reallocation
       if (count + idx <= old_size) {
@@ -315,7 +315,7 @@ public:
     return begin() + idx;
   }
 
-  template <class InputIt>
+  template <std::input_iterator InputIt>
   constexpr iterator insert(const_iterator pos, InputIt first, InputIt last) {
     // ub if either first or last are iterators into *this
     assert((pos >= cbegin()) && (pos <= cend()));
@@ -396,7 +396,7 @@ public:
 
     auto idx = static_cast<size_type>(pos - begin());
 
-    std::move(pos + 1, end(), pos);
+    std::move(begin() + idx + 1, end(), begin() + idx);
 
     --m_size;
 
@@ -414,7 +414,7 @@ public:
     auto num_to_erase = static_cast<size_type>(last - first);
     auto idx = static_cast<size_type>(first - begin());
 
-    std::move(last, end(), first);
+    std::move(begin() + (last - begin()), end(), begin() + idx);
 
     m_size -= num_to_erase;
 
