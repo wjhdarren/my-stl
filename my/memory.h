@@ -26,7 +26,6 @@ template <class T> struct default_delete<T[]> {
 };
 
 // m_compressed_pair
-
 struct m_zero_then_variadic_args_t {
   explicit m_zero_then_variadic_args_t() = default;
 };
@@ -94,8 +93,9 @@ concept has_pointer_type = requires { typename D::pointer; };
 
 template <typename D>
 concept unique_ptr_enable_default_t =
-    !std::is_pointer_v<D> && std::is_default_constructible_v<D>;
+    !std::is_pointer_v<D> && std::default_initializable<D>;
 
+// unique pointer
 template <class T, class Deleter = default_delete<T>> class unique_ptr {
 public:
   using pointer =
@@ -110,6 +110,14 @@ private:
 
 public:
   // ctor
+  constexpr unique_ptr() noexcept
+    requires unique_ptr_enable_default_t<deleter_type>
+      : m_pair(m_zero_then_variadic_args_t{}) {}
+
+  constexpr unique_ptr(std::nullptr_t) noexcept
+    requires unique_ptr_enable_default_t<deleter_type>
+      : unique_ptr() {}
+
   unique_ptr(const unique_ptr &) = delete;
 
   // member functions
