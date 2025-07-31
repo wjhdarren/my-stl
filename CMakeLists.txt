@@ -17,13 +17,13 @@ target_link_libraries(dbg_my_stl lib_my_stl)
 find_package(GTest REQUIRED)
 
 # Test executable (equivalent to vectortest in meson)
-add_executable(vectortest 
-    test/vector_test.cpp 
+add_executable(vectortest
+    test/vector_test.cpp
     test/test.cpp
 )
 
-target_link_libraries(vectortest 
-    lib_my_stl 
+target_link_libraries(vectortest
+    lib_my_stl
     GTest::gtest
 )
 

@@ -5,13 +5,13 @@
 find_package(GTest REQUIRED)
 
 # Test executable
-add_executable(vectortest 
-    vector_test.cpp 
+add_executable(vectortest
+    vector_test.cpp
     test.cpp
 )
 
-target_link_libraries(vectortest 
-    lib_my_stl 
+target_link_libraries(vectortest
+    lib_my_stl
     GTest::gtest
 )
 
