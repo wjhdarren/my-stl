@@ -3,3 +3,5 @@ build/
 .idea/
 .cache/
 .vscode/
+.cursor/
+*.json
