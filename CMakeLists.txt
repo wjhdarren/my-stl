@@ -4,42 +4,31 @@ project(my_stl)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+
 add_subdirectory(my)
 
+# Main debug executable (equivalent to commented out main in meson)
 add_executable(dbg_my_stl main.cpp)
-
 target_link_libraries(dbg_my_stl lib_my_stl)
 
+# Find GTest dependency
+find_package(GTest REQUIRED)
+
+# Test executable (equivalent to vectortest in meson)
+add_executable(vectortest 
+    test/vector_test.cpp 
+    test/test.cpp
+)
+
+target_link_libraries(vectortest 
+    lib_my_stl 
+    GTest::gtest
+)
+
+# Enable testing
+enable_testing()
+add_test(NAME VectorTests COMMAND vectortest)
 
 
-# enable_testing()
 
-# # Add Google Test
-# include(FetchContent)
-# FetchContent_Declare(
-#   googletest
-#   GIT_REPOSITORY https://github.com/google/googletest.git
-#   GIT_TAG        v1.15.2
-# )
-# # For Windows: Prevent overriding the parent project's compiler/linker settings
-# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-# FetchContent_MakeAvailable(googletest)
-
-# # Test executable
-# add_executable(
-#   vector_tests
-#   test/vector/vector_test.cpp
-# )
-
-# # Link test executable with gtest
-# target_link_libraries(
-#   vector_tests
-#   gtest_main
-# )
-
-# # Include directories for tests
-# target_include_directories(vector_tests PRIVATE ${CMAKE_SOURCE_DIR})
-
-# # Register tests with CTest
-# include(GoogleTest)
-# gtest_discover_tests(vector_tests)
