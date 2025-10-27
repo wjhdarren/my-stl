@@ -8,7 +8,7 @@ project(
 
 my_stl_lib = shared_library(
   'mystl',
-  ['my/vector.h']
+  ['my/vector.h', 'my/list.h']
 )
 
 test_dep = dependency('gtest')
@@ -27,3 +27,9 @@ vector_test = executable(
   link_with : my_stl_lib
 )
 
+list_test = executable(
+  'listtest',
+  sources : ['test/list_test.cpp', 'test/test.cpp'],
+  dependencies : test_dep,
+  link_with : my_stl_lib
+)
