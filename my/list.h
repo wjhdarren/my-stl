@@ -116,7 +116,7 @@ public:
   constexpr list_const_iterator() noexcept = default;
   constexpr list_const_iterator(base_pointer p) : m_node{p} {}
   constexpr list_const_iterator(node_pointer p) : m_node{p->as_base()} {}
-  constexpr list_const_iterator(const iterator &other) = default;
+  constexpr list_const_iterator(const iterator &other) : m_node{other.m_node} {}
   constexpr list_const_iterator(const const_iterator &other) = default;
 
   ~list_const_iterator() = default;
@@ -308,6 +308,10 @@ public:
       m_sentinel->unlink();
       m_size = 0;
     }
+  }
+
+  iterator insert(const_iterator pos, const_reference value) {
+    auto curr = m_sentinel;
   }
 };
 } // namespace my
