@@ -8,10 +8,18 @@
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <utility>
 
 namespace my {
+
+namespace stdr = std::ranges;
+
+// helper concept to construct the vector from a range
+template <class R, class T>
+concept container_compatible_range =
+    stdr::input_range<R> && std::convertible_to<stdr::range_reference_t<R>, T>;
 
 template <class T> class vector {
 public:
@@ -65,9 +73,19 @@ public:
     }
   }
 
-  // template< container-compatible-range<T> R >
-  // constexpr vector( std::from_range_t, R&& rg,
-  //                   const Allocator& alloc = Allocator() );
+  template <container_compatible_range<T> R>
+  constexpr vector(std::from_range_t, R &&rg)
+      : m_data{}, m_size{}, m_capacity{} {
+    if constexpr (stdr::sized_range<R>) {
+      // Wow, we use if constexpr with concept!
+      // Can you see how "mordern" we are?
+      reserve(stdr::size(rg));
+    }
+
+    for (auto &&e : rg) {
+      push_back(std::forward<decltype(e)>(e));
+    }
+  }
 
   template <class InputIt> constexpr vector(InputIt first, InputIt last) {
     auto count = static_cast<size_type>(std::distance(first, last));
