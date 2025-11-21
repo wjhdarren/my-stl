@@ -24,4 +24,7 @@ int main() {
       stdv::iota(0, 10), [](int i) { return std::make_unique<int>(i); });
   auto vec3 = my::vector<std::unique_ptr<int>>(std::from_range, unique_ptr_v);
   vec3.show();
+
+  auto vec4 = vec | stdv::filter([](int i) { return i <= 5;}) | stdr::to<my::vector>();
+  vec4.show();
 }

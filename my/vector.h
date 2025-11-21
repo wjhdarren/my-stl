@@ -507,10 +507,6 @@ public:
       std::swap(m_capacity, other.m_capacity);
     }
   }
-
-  // Range-related methods
-  // template< container-compatible-range<T> R >
-  // constexpr iterator insert_range( const_iterator pos, R&& rg );
 };
 
 // Non-member functions
@@ -524,5 +520,12 @@ template <class T>
 constexpr bool operator==(const vector<T> &lhs, const vector<T> &rhs) {
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
-
+// deduction guide
+template< class InputIt>
+vector(InputIt, InputIt) -> vector<typename std::iterator_traits<InputIt>::value_type>;
+template< class T >
+concept input_range =
+    stdr::range<T> && std::input_iterator<stdr::iterator_t<T>>;
+template<input_range R>
+vector(std::from_range_t, R&&) -> vector<stdr::range_value_t<R>>;
 } // namespace my
