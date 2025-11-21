@@ -4,5 +4,7 @@ build/
 .cache/
 .vscode/
 .cursor/
+.zed/
+*.dSYM
 *.json
 main
