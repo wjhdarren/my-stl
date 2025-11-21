@@ -1,6 +1,7 @@
 #pragma once
 #include <concepts>
 #include <type_traits>
+#include <print>
 #include <utility>
 
 namespace my {
@@ -109,6 +110,9 @@ private:
   m_compressed_pair<deleter_type, pointer> m_pair;
 
 public:
+  void show() {
+    std::println("pointer={}, size={}", m_pair.get_second(), sizeof(m_pair));
+  }
   // ctor
   constexpr unique_ptr() noexcept
     requires unique_ptr_enable_default_t<deleter_type>
